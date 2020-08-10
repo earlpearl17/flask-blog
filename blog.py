@@ -84,8 +84,4 @@ if __name__ == '__main__':
     #app.run(debug=True)    
     #port = int(os.environ.get('PORT', 5000))
     #app.run(host='0.0.0.0', port=port)
-<<<<<<< HEAD
     app.run(host='0.0.0.0')
-=======
-    app.run()
->>>>>>> e80ed3da3e57efa880ddd0d2a2bd1d4d0534a8f9
