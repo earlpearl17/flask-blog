@@ -6,9 +6,16 @@ from flask import Flask, render_template, request, session, \
     flash, redirect, url_for, g
 import sqlite3
 from functools import wraps
+import psycopg2
 
 # configuration
-DATABASE = 'blog.db'
+DEBUG = True
+HOST = 'localhost'
+DATABASE = 'blogdb'
+DB_USER = 'bloguser'
+DB_PWD = 'flask1234'
+DB_PORT = '5432'
+# DATABASE = 'blog.db'
 USERNAME = 'admin'
 PASSWORD = 'admin'
 SECRET_KEY = 'hard_to_guess'
@@ -22,8 +29,15 @@ app.config.from_object(__name__)
 
 # function used for connecting to the database
 def connect_db():
-    return sqlite3.connect(app.config['DATABASE'])
-
+    #return sqlite3.connect(app.config['DATABASE'])
+    return psycopg2.connect(
+        host=app.config['HOST'],
+        database=app.config['DATABASE'],
+        user=app.config['DB_USER'],
+        password=app.config['DB_PWD'],
+        port=app.config['DB_PORT']
+    )
+   
 def login_required(test):
     @wraps(test)
     def wrap(*args, **kwargs):
@@ -52,10 +66,15 @@ def login():
 @app.route('/main')
 @login_required
 def main():
-    g.db = connect_db()
-    cur = g.db.execute('select * from posts')
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute('select * from posts')
     posts = [dict(title=row[0], post=row[1]) for row in cur.fetchall()]
-    g.db.close()
+    conn.close()
+    # g.db = connect_db()
+    # cur = g.db.execute('select * from posts')
+    # posts = [dict(title=row[0], post=row[1]) for row in cur.fetchall()]
+    # g.db.close()
     return render_template('main.html', posts=posts)    
 
 @app.route('/add', methods=['POST'])
@@ -67,10 +86,11 @@ def add():
         flash("All fields are required. Please try again.")
         return redirect(url_for('main'))
     else:
-        g.db = connect_db()
-        g.db.execute('insert into posts (title, post) values (?, ?)', [request.form['title'], request.form['post']])
-        g.db.commit()
-        g.db.close()
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute("""insert into posts (title, post) values (%s, %s)""", (request.form['title'], request.form['post']))
+        conn.commit()
+        conn.close()
         flash('New entry was successfully posted!')
         return redirect(url_for('main'))
 
