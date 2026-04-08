@@ -5,3 +5,5 @@
 *.db
 my_venv/
 __pycache__/
+fb_venv/
+blog-local.py
